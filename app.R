@@ -20,7 +20,9 @@ ui <- navbarPage("robvis",
                  tags$li("The next column contains the first domain of the assessment tool. The number of columns that contain a risk of bias domain will vary by tool used."),
                  tags$li("The second to last column contains the overall risk-of-bias judgement"),
                  tags$li("The final column contains the weight variable, often study sample size or precision.")
-               )
+               ),
+               h4("robvis R package"),
+               p("This web app is built on the robvis R package, which can be accessed at:")
              ),
              mainPanel(
              h4("Example of assessment sheet using ROB2"),
