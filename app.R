@@ -108,9 +108,41 @@ ui <- navbarPage(
       
       mainPanel(plotOutput("summaryplot"))
     )
-  )
-  # tabPanel("Traffic Light")
-)
+  ),
+  
+  tabPanel("Traffic Light",
+           titlePanel("Traffic light risk-of-bias summary visualisation"),
+           
+           sidebarLayout(
+             sidebarPanel(
+               fileInput(
+                 "trafficfile1",
+                 "Choose CSV file:",
+                 multiple = FALSE,
+                 accept = c("text/csv",
+                            "text/comma-separated-values,text/plain",
+                            ".csv")
+               ),
+               
+               selectInput(
+                 "traffictool",
+                 "Assessment tool used:",
+                 c(
+                   Choose = '',
+                   "RoB 2.0" = "ROB2",
+                   "ROBINS-I" = "ROBINS-I",
+                   "QUADAS-2" = "QUADAS-2"
+                 )
+               ),
+               
+               downloadButton("downloadtrafficlightplot", "Download plot (.png)")
+             ),
+             
+             mainPanel(plotOutput("trafficlightplot"))
+           )
+  )     
+           )
+
 
 
 
@@ -147,9 +179,10 @@ server <- function(input, output) {
   output$quadastable <- renderTable(robvis::data_quadas)
   
   
-  
-  summaryplotInput <- reactive({
+# Summary plot and download  
+summaryplotInput <- reactive({
     req(input$file1)
+    req(input$tool)
     
     tryCatch({
       df <- read.csv(input$file1$datapath,
@@ -165,11 +198,12 @@ server <- function(input, output) {
     
   })
   
-  output$summaryplot <- renderPlot({
+output$summaryplot <- renderPlot({
     summaryplotInput()
   })
   
-  output$downloadsummaryplot <- downloadHandler(
+
+output$downloadsummaryplot <- downloadHandler(
     filename = function() {
       paste0(input$tool, ".png")
     },
@@ -180,6 +214,44 @@ server <- function(input, output) {
         device = "png",
         width = 8,
         height = 2.41,
+        dpi = 800
+      )
+    }
+  )
+  
+# Traffic light plot and download
+trafficlightplotInput <- reactive({
+    req(input$trafficfile1)
+    req(input$traffictool)
+    
+    tryCatch({
+      trafficdf <- read.csv(input$trafficfile1$datapath,
+                     header = TRUE)
+    },
+    error = function(e) {
+      stop(safeError(e))
+    })
+    
+    robvis::rob_traffic_light(data = trafficdf,
+                        tool = input$traffictool)
+    
+  })
+  
+output$trafficlightplot <- renderPlot({
+  trafficlightplotInput()
+})
+  
+output$downloadtrafficlightplot <- downloadHandler(
+    filename = function() {
+      paste0(input$traffictool, ".png")
+    },
+    content = function(file) {
+      ggplot2::ggsave(
+        file,
+        plot = trafficlightplotInput(),
+        device = "png",
+        width = 8,
+        height = 8,
         dpi = 800
       )
     }
