@@ -1,0 +1,12 @@
+name: test
+title: test
+username:
+account: mcguinlu
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 887335
+bundleId: 2035530
+url: https://mcguinlu.shinyapps.io/test/
+when: 1556108412.81699
+asMultiple: FALSE
+asStatic: FALSE
