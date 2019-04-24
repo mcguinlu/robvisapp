@@ -2,43 +2,82 @@ library(shiny)
 library(robvis)
 
 # Define UI for application that draws a histogram
-ui <- navbarPage("robvis",
-  tabPanel("Data Format",
-           
-           titlePanel("Data format needed for this app to work"),
-           
-           sidebarLayout(
-             sidebarPanel(
-               h4("Introduction to robvis"),
-               
-               br(),
-               h4("Data format needed for this app to work"),
-               p("To ensure that this app works as expected, the required data format is 
-                 displayed on the right. Data are laid out as follows:"),
-               tags$ul(
-                 tags$li("The first column contains details about the study, such as author and year of publication."),
-                 tags$li("The next column contains the first domain of the assessment tool. The number of columns that contain a risk of bias domain will vary by tool used."),
-                 tags$li("The second to last column contains the overall risk-of-bias judgement"),
-                 tags$li("The final column contains the weight variable, often study sample size or precision.")
-               ),
-               h4("robvis R package"),
-               p("This web app is built on the robvis R package, which can be accessed at:")
-             ),
-             mainPanel(
-             h4("Example of assessment sheet using ROB2"),
-             tableOutput('rob2table'),
-             br(),
-             h4("Example of assessment sheet using ROBINS-I"),
-             tableOutput('robinstable'),
-             br(),
-             h4("Example of assessment sheet using QUADAS-2"),
-             tableOutput('quadastable')))
-           ),
-
+ui <- navbarPage(
+  "robvis",
   tabPanel(
-    "Summary",
+    "Home",
     
-    titlePanel("Risk-of-bias summary visualisation"),
+    titlePanel("Welcome!"),
+    
+    sidebarLayout(
+      sidebarPanel(
+        h4(
+          "Introducing", em("robvis,"),"a tool to visualise risk of bias assessments"
+        ),
+        p(
+          "This app makes it easy to produce publication quality figures that summarise the risk-of-bias assessments performed as part of a systemtatic review."
+        ),
+        p(
+          "This web app is built on the",
+          em("robvis"),
+          "R package, which can be accessed ",
+          a("here.", href = "https://www.github.com/mcguinlu/robvis")
+        ),
+        p(
+          em("robvis"),
+          "forms part of the",
+          a("Rmetaverse", href = "https://www.github.com/rmetaverse"),
+          ", a suite of tools for performing evidence synthesis in R."
+        ),
+        br(),
+        h4("Required data format"),
+        p(
+          
+          "To ensure that this app works as expected, the uploaded table must have a certain format.", 
+          "For demonstration purposes, an correctly formatted summary table for each tool is displayed on the right.", 
+          "For clarity, data are laid out as follows:"
+        ),
+        tags$ul(
+          tags$li(
+            "The first column contains details about the study, such as author and year of publication."
+          ),
+          tags$li(
+            "The second and subsequent columns contain the judgements in each domain of the assessment tool. The number of columns containing domain-level assessments will vary by tool used.",
+            strong("NB: it is important that the order of domains in the uploaded spreadsheet is exactly the same as the order in which the domains appear in the tool used.")
+          ),
+          tags$li(
+            "The second last column contains the overall risk-of-bias judgement"
+          ),
+          tags$li(
+            "The final column contains the \"Weight\" variable, often study sample size or precision."
+          )
+        ),
+        p("Example datasets for use with this app can be downloaded here:"),
+        downloadButton("downloadROB2Data", "Download RoB2.0 example dataset"),
+        br(),
+        br(),
+        downloadButton("downloadROBINSData", "Download ROBINS example dataset"),
+        br(),
+        br(),
+        downloadButton("downloadQUADASData", "Download QUADAS example dataset")
+      ),
+      mainPanel(
+        h4("Example of assessment sheet using ROB2"),
+        tableOutput('rob2table'),
+        br(),
+        h4("Example of assessment sheet using ROBINS-I"),
+        tableOutput('robinstable'),
+        br(),
+        h4("Example of assessment sheet using QUADAS-2"),
+        tableOutput('quadastable')
+      )
+    )
+  ),
+  
+  tabPanel(
+    "Weighted Summary Plot",
+    
+    titlePanel("Weighted risk-of-bias summary visualisation"),
     
     sidebarLayout(
       sidebarPanel(
@@ -53,7 +92,7 @@ ui <- navbarPage("robvis",
         
         selectInput(
           "tool",
-          "Tool:",
+          "Assessment tool used:",
           c(
             Choose = '',
             "RoB 2.0" = "ROB2",
@@ -69,20 +108,43 @@ ui <- navbarPage("robvis",
       
       mainPanel(plotOutput("summaryplot"))
     )
-  ),
-  tabPanel("Traffic Light")
+  )
+  # tabPanel("Traffic Light")
 )
 
 
 
 server <- function(input, output) {
+  output$downloadROB2Data <- downloadHandler(
+    filename = function() {
+      paste("ROB2_example", ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(robvis::data_rob, file, row.names = FALSE)
+    }
+  )
   
-  output$rob2table <- renderTable(
-    robvis::data_rob)
-  output$robinstable <- renderTable(
-    robvis::data_robins)
-  output$quadastable <- renderTable(
-    robvis::data_quadas)
+  output$downloadROBINSData <- downloadHandler(
+    filename = function() {
+      paste("ROBINS_example", ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(robvis::data_robins, file, row.names = FALSE)
+    }
+  )
+  
+  output$downloadQUADASData <- downloadHandler(
+    filename = function() {
+      paste("QUADAS_example", ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(robvis::data_quadas, file, row.names = FALSE)
+    }
+  )
+  
+  output$rob2table <- renderTable(robvis::data_rob)
+  output$robinstable <- renderTable(robvis::data_robins)
+  output$quadastable <- renderTable(robvis::data_quadas)
   
   
   
