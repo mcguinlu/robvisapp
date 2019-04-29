@@ -5,8 +5,8 @@ account: mcguinlu
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 887345
-bundleId: 2035720
+bundleId: 2046344
 url: https://mcguinlu.shinyapps.io/robvis/
-when: 1556113404.51221
+when: 1556533766.43778
 asMultiple: FALSE
 asStatic: FALSE

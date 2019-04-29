@@ -26,7 +26,7 @@ ui <- navbarPage(
         p(
           em("robvis"),
           "forms part of the",
-          a("Rmetaverse", href = "https://www.github.com/rmetaverse"),
+          a("metaverse", href = "https://www.github.com/rmetaverse"),
           ", a suite of tools for performing evidence synthesis in R."
         ),
         br(),
@@ -51,8 +51,14 @@ ui <- navbarPage(
           tags$li(
             "The final column contains the \"Weight\" variable, often study sample size or precision."
           )
-        ),
-        p("Example datasets for use with this app can be downloaded here:"),
+        )
+
+      ),
+      mainPanel(
+        h4("Example of summary assessment sheet using ROB2"),
+        tableOutput('rob2table'),
+        br(),
+        h4("Example datasets for use with this app can be downloaded here:"),
         downloadButton("downloadROB2Data", "Download RoB2.0 example dataset"),
         br(),
         br(),
@@ -60,16 +66,12 @@ ui <- navbarPage(
         br(),
         br(),
         downloadButton("downloadQUADASData", "Download QUADAS example dataset")
-      ),
-      mainPanel(
-        h4("Example of assessment sheet using ROB2"),
-        tableOutput('rob2table'),
-        br(),
-        h4("Example of assessment sheet using ROBINS-I"),
-        tableOutput('robinstable'),
-        br(),
-        h4("Example of assessment sheet using QUADAS-2"),
-        tableOutput('quadastable')
+        # br(),
+        # h4("Example of assessment sheet using ROBINS-I"),
+        # tableOutput('robinstable'),
+        # br(),
+        # h4("Example of assessment sheet using QUADAS-2"),
+        # tableOutput('quadastable')
       )
     )
   ),
@@ -104,13 +106,15 @@ ui <- navbarPage(
         checkboxInput("overall", "Include overall risk of bias?", value = FALSE),
         
         downloadButton("downloadsummaryplot", "Download plot (.png)")
+        
+        
       ),
       
       mainPanel(plotOutput("summaryplot"))
     )
   ),
   
-  tabPanel("Traffic Light",
+  tabPanel("Traffic Light Plot",
            titlePanel("Traffic light risk-of-bias summary visualisation"),
            
            sidebarLayout(
@@ -138,7 +142,7 @@ ui <- navbarPage(
                downloadButton("downloadtrafficlightplot", "Download plot (.png)")
              ),
              
-             mainPanel(plotOutput("trafficlightplot"))
+             mainPanel(uiOutput("trafficplotUI"))
            )
   )     
            )
@@ -147,6 +151,9 @@ ui <- navbarPage(
 
 
 server <- function(input, output) {
+  # library(Cairo)
+  # options(shiny.usecairo=TRUE)
+
   output$downloadROB2Data <- downloadHandler(
     filename = function() {
       paste("ROB2_example", ".csv", sep = "")
@@ -192,9 +199,9 @@ summaryplotInput <- reactive({
       stop(safeError(e))
     })
     
-    robvis::rob_summary(data = df,
+    try(robvis::rob_summary(data = df,
                         tool = input$tool,
-                        overall = input$overall)
+                        overall = input$overall))
     
   })
   
@@ -232,15 +239,31 @@ trafficlightplotInput <- reactive({
       stop(safeError(e))
     })
     
-    robvis::rob_traffic_light(data = trafficdf,
-                        tool = input$traffictool)
+    try(robvis::rob_traffic_light(data = trafficdf,
+                        tool = input$traffictool))
     
   })
   
 output$trafficlightplot <- renderPlot({
   trafficlightplotInput()
 })
-  
+
+nrows <- reactive({
+  req(input$trafficfile1)
+  req(input$traffictool)
+  trafficdf <- read.csv(input$trafficfile1$datapath,
+                        header = TRUE)
+  nrows <- nrow(trafficdf)
+  nrows <- nrows * 70 + 100
+  return(nrows)
+  })
+
+output$trafficplotUI <- renderUI({
+  plotOutput("trafficlightplot", height = nrows())
+})
+
+
+
 output$downloadtrafficlightplot <- downloadHandler(
     filename = function() {
       paste0(input$traffictool, ".png")
@@ -256,6 +279,7 @@ output$downloadtrafficlightplot <- downloadHandler(
       )
     }
   )
+
 }
 
 # Run the application
