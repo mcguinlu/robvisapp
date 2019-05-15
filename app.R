@@ -5,8 +5,6 @@ library(shinycssloaders)
 
 options(spinner.color="#820000", spinner.type = 4, spinner.size = 2)
 
-
-
 # Define UI for application that draws a histogram
 ui <- tagList(  
   tags$style(type="text/css", 
