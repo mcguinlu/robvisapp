@@ -1,10 +1,18 @@
 library(shiny)
 library(robvis)
 library(svglite)
+library(shinycssloaders)
+
+options(spinner.color="#820000", spinner.type = 4, spinner.size = 2)
+
 
 
 # Define UI for application that draws a histogram
-ui <- tagList(
+ui <- tagList(  
+  tags$style(type="text/css", 
+             ".shiny-output-error { visibility: hidden;}",
+             ".shiny-output-error:before { visibility: visible; content: 'An error has occurred. Please double-check your that your selected tool matches the data you uploaded (common problem). If you believe you have found a bug, please contact me! The error is: ' ; }"
+  ),
   shinyjs::useShinyjs(),  # Include shinyjs
   navbarPage( "robvis",
   
@@ -83,10 +91,11 @@ ui <- tagList(
 
 # Traffic light Plot Page ======================================================    
   tabPanel("Traffic Light Plot",
-           titlePanel("Traffic light risk-of-bias summary visualisation"),
+           titlePanel("Traffic light visualisation of risk-of-bias assessments"),
            
            sidebarLayout(
              sidebarPanel(
+               h4(tags$b("Set-up")),
                fileInput(
                  "trafficfile1",
                  "Choose CSV file:",
@@ -98,7 +107,7 @@ ui <- tagList(
                
                selectInput(
                  "traffictool",
-                 "Assessment tool used:",
+                 "Specify assessment tool used:",
                  c(
                    Choose = '',
                    "RoB 2.0" = "ROB2",
@@ -106,7 +115,21 @@ ui <- tagList(
                    "QUADAS-2" = "QUADAS-2"
                  )
                ),
+               actionButton("resettraffic", "Reset"),
+               hr(),
+               h4(tags$b("Options")),
                
+               selectInput(
+                 "trafficcolour",
+                 "Choose colour scheme:",
+                 c(
+                   "Cochrane colours" = "cochrane",
+                   "Colourblind-friendly" = "colourblind"
+                 )
+               ),
+               
+               hr(),
+               h4(tags$b("Download")),
                selectInput(
                  "trafficdownloadformat",
                  "Specify download format:",
@@ -121,9 +144,13 @@ ui <- tagList(
                ),
                
                downloadButton("downloadtrafficlightplot", "Download plot")
+               
+
              ),
              
-             mainPanel(uiOutput("trafficplotUI"))
+             mainPanel(
+               withSpinner(uiOutput("trafficplotUI"))
+               )
            )
   ),
 
@@ -131,12 +158,13 @@ ui <- tagList(
   tabPanel(
     "Weighted Summary Plot",
     
-    titlePanel("Weighted risk-of-bias summary visualisation"),
+    titlePanel("Weighted barplot visualisation of risk-of-bias assessments"),
     
     sidebarLayout(
       sidebarPanel(
+        h4(tags$b("Set-up")),
         fileInput(
-          "file1",
+          "summaryfile1",
           "Choose CSV file:",
           multiple = FALSE,
           accept = c("text/csv",
@@ -145,8 +173,8 @@ ui <- tagList(
         ),
         
         selectInput(
-          "tool",
-          "Assessment tool used:",
+          "summarytool",
+          "Specify assessment tool used:",
           c(
             Choose = '',
             "RoB 2.0" = "ROB2",
@@ -154,15 +182,29 @@ ui <- tagList(
             "QUADAS-2" = "QUADAS-2"
           )
         ),
+        actionButton("resetbarplot", "Reset"),
+        hr(),
+        h4(tags$b("Options")),
         
-        checkboxInput("overall", "Include overall risk of bias?", value = FALSE),
-        h4("Colours"),
-        checkboxInput("cochrane", "Use Cochrane Colours?", value = FALSE),
-        shinyjs::disabled(
-        checkboxInput("usercolours", "Use my own colours?", value = FALSE)
+        checkboxInput("weights",
+                      "Use weights (strongly recommended)?", 
+                      value = TRUE),  
+        
+        checkboxInput("overall",
+                      "Include overall risk of bias?"),    
+        
+        selectInput(
+          "barplotcolour",
+          "Choose colour scheme:",
+          c(
+            "Cochrane colours" = "cochrane",
+            "Colourblind-friendly" = "colourblind"
+          )
         ),
         
         
+        hr(),
+        h4(tags$b("Download")),
         selectInput(
           "summarydownloadformat",
           "Specify download format:",
@@ -181,7 +223,7 @@ ui <- tagList(
         
       ),
       
-      mainPanel(plotOutput("summaryplot"))
+      mainPanel(withSpinner(plotOutput("summaryplot")))
     )
   )
            )
@@ -198,6 +240,7 @@ server <- function(input, output) {
     shinyjs::toggleState("usercolours")
   })
 
+  #Download datasets
   output$downloadROB2Data <- downloadHandler(
     filename = function() {
       paste("ROB2_example", ".csv", sep = "")
@@ -232,11 +275,11 @@ server <- function(input, output) {
   
 # Summary plot and download  
 summaryplotInput <- reactive({
-    req(input$file1)
-    req(input$tool)
+    req(input$summaryfile1)
+    req(input$summarytool)
     
     tryCatch({
-      df <- read.csv(input$file1$datapath,
+      df <- read.csv(input$summaryfile1$datapath,
                      header = TRUE)
     },
     error = function(e) {
@@ -244,19 +287,20 @@ summaryplotInput <- reactive({
     })
     
     try(robvis::rob_summary(data = df,
-                        tool = input$tool,
-                        overall = input$overall))
-    
+                        tool = input$summarytool,
+                        overall = input$overall, 
+                        weighted = input$weights,
+                        colour = input$barplotcolour))
   })
   
 output$summaryplot <- renderPlot({
-    summaryplotInput()
+  summaryplotInput()
   })
-  
+
 
 output$downloadsummaryplot <- downloadHandler(
     filename = function() {
-      paste0(input$tool, ".", input$summarydownloadformat)
+      paste0(input$summarytool, ".", input$summarydownloadformat)
     },
     content = function(file) {
       ggplot2::ggsave(
@@ -280,19 +324,21 @@ trafficlightplotInput <- reactive({
                      header = TRUE)
     },
     error = function(e) {
-      stop(safeError(e))
+      stop(safeError(paste('Cannot read data file')))
     })
+
     
-    try(robvis::rob_traffic_light(data = trafficdf,
-                        tool = input$traffictool))
+      robvis::rob_traffic_light(data = trafficdf,
+                        tool = input$traffictool,
+                        colour = input$trafficcolour)
     
   })
   
 output$trafficlightplot <- renderPlot({
-  trafficlightplotInput()
+    trafficlightplotInput()
 })
 
-nrows <- reactive({
+nrowspx <- reactive({
   req(input$trafficfile1)
   req(input$traffictool)
   trafficdf <- read.csv(input$trafficfile1$datapath,
@@ -302,8 +348,18 @@ nrows <- reactive({
   return(nrows)
   })
 
+nrowsin <- reactive({
+  req(input$trafficfile1)
+  req(input$traffictool)
+  trafficdf <- read.csv(input$trafficfile1$datapath,
+                        header = TRUE)
+  nrows <- nrow(trafficdf)
+  nrows <- nrows * 1
+  return(nrows)
+})
+
 output$trafficplotUI <- renderUI({
-  plotOutput("trafficlightplot", height = nrows())
+  withSpinner(plotOutput("trafficlightplot", height = nrowspx()))
 })
 
 
@@ -318,12 +374,21 @@ output$downloadtrafficlightplot <- downloadHandler(
         plot = trafficlightplotInput(),
         device = input$trafficdownloadformat,
         width = 8,
-        height = 8,
-        dpi = 800
+        height = nrowsin(),
+        units = "in",
+        dpi = 800, 
+        limitsize = FALSE
       )
     }
   )
 
+observeEvent(input$resettraffic, {
+  shinyjs::reset("trafficfile1")
+  shinyjs::reset("traffictool")})
+
+observeEvent(input$resetbarplot, {
+  shinyjs::reset("summaryfile1")
+  shinyjs::reset("summarytool")})
 }
 
 # Run the application
