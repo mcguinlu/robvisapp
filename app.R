@@ -1,5 +1,6 @@
 library(shiny)
 library(robvis)
+library(svglite)
 
 
 # Define UI for application that draws a histogram
@@ -106,6 +107,19 @@ ui <- tagList(
                  )
                ),
                
+               selectInput(
+                 "trafficdownloadformat",
+                 "Specify download format:",
+                 c(
+                   Choose = '',
+                   ".png" = "png",
+                   ".wmf" = "wmf",
+                   ".jpeg" = "jpeg",
+                   ".tiff" = "tiff",
+                   ".eps" = "eps"
+                 )
+               ),
+               
                downloadButton("downloadtrafficlightplot", "Download plot")
              ),
              
@@ -149,6 +163,18 @@ ui <- tagList(
         ),
         
         
+        selectInput(
+          "summarydownloadformat",
+          "Specify download format:",
+          c(
+            Choose = '',
+            ".png" = "png",
+            ".wmf" = "wmf",
+            ".jpeg" = "jpeg",
+            ".tiff" = "tiff",
+            ".eps" = "eps"
+          )
+        ),
         
         downloadButton("downloadsummaryplot", "Download plot")
         
@@ -163,10 +189,9 @@ ui <- tagList(
 
 
 
-
+# Server =======================================================================
 server <- function(input, output) {
-  # library(Cairo)
-  # options(shiny.usecairo=TRUE)
+
   
   observeEvent(input$cochrane, {
     # Change the following line for more examples
@@ -231,13 +256,13 @@ output$summaryplot <- renderPlot({
 
 output$downloadsummaryplot <- downloadHandler(
     filename = function() {
-      paste0(input$tool, ".png")
+      paste0(input$tool, ".", input$summarydownloadformat)
     },
     content = function(file) {
       ggplot2::ggsave(
         file,
         plot = summaryplotInput(),
-        device = "png",
+        device = input$summarydownloadformat,
         width = 8,
         height = 2.41,
         dpi = 800
@@ -285,13 +310,13 @@ output$trafficplotUI <- renderUI({
 
 output$downloadtrafficlightplot <- downloadHandler(
     filename = function() {
-      paste0(input$traffictool, ".png")
+      paste0(input$traffictool,".", input$trafficdownloadformat)
     },
     content = function(file) {
       ggplot2::ggsave(
         file,
         plot = trafficlightplotInput(),
-        device = "png",
+        device = input$trafficdownloadformat,
         width = 8,
         height = 8,
         dpi = 800
