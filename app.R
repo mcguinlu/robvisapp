@@ -136,7 +136,6 @@ ui <- tagList(
                  c(
                    Choose = '',
                    ".png" = "png",
-                   ".wmf" = "wmf",
                    ".jpeg" = "jpeg",
                    ".tiff" = "tiff",
                    ".eps" = "eps"
@@ -211,11 +210,10 @@ ui <- tagList(
           c(
             Choose = '',
             ".png" = "png",
-            ".wmf" = "wmf",
             ".jpeg" = "jpeg",
             ".tiff" = "tiff",
             ".eps" = "eps"
-          )
+            )
         ),
         
         downloadButton("downloadsummaryplot", "Download plot")
