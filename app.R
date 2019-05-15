@@ -1,9 +1,13 @@
 library(shiny)
 library(robvis)
 
+
 # Define UI for application that draws a histogram
-ui <- navbarPage(
-  "robvis",
+ui <- tagList(
+  shinyjs::useShinyjs(),  # Include shinyjs
+  navbarPage( "robvis",
+  
+# Home Page ====================================================================          
   tabPanel(
     "Home",
     
@@ -75,7 +79,41 @@ ui <- navbarPage(
       )
     )
   ),
-  
+
+# Traffic light Plot Page ======================================================    
+  tabPanel("Traffic Light Plot",
+           titlePanel("Traffic light risk-of-bias summary visualisation"),
+           
+           sidebarLayout(
+             sidebarPanel(
+               fileInput(
+                 "trafficfile1",
+                 "Choose CSV file:",
+                 multiple = FALSE,
+                 accept = c("text/csv",
+                            "text/comma-separated-values,text/plain",
+                            ".csv")
+               ),
+               
+               selectInput(
+                 "traffictool",
+                 "Assessment tool used:",
+                 c(
+                   Choose = '',
+                   "RoB 2.0" = "ROB2",
+                   "ROBINS-I" = "ROBINS-I",
+                   "QUADAS-2" = "QUADAS-2"
+                 )
+               ),
+               
+               downloadButton("downloadtrafficlightplot", "Download plot")
+             ),
+             
+             mainPanel(uiOutput("trafficplotUI"))
+           )
+  ),
+
+# Weighted Bar Plot Page =======================================================          
   tabPanel(
     "Weighted Summary Plot",
     
@@ -104,48 +142,24 @@ ui <- navbarPage(
         ),
         
         checkboxInput("overall", "Include overall risk of bias?", value = FALSE),
+        h4("Colours"),
+        checkboxInput("cochrane", "Use Cochrane Colours?", value = FALSE),
+        shinyjs::disabled(
+        checkboxInput("usercolours", "Use my own colours?", value = FALSE)
+        ),
         
-        downloadButton("downloadsummaryplot", "Download plot (.png)")
+        
+        
+        downloadButton("downloadsummaryplot", "Download plot")
         
         
       ),
       
       mainPanel(plotOutput("summaryplot"))
     )
-  ),
-  
-  tabPanel("Traffic Light Plot",
-           titlePanel("Traffic light risk-of-bias summary visualisation"),
-           
-           sidebarLayout(
-             sidebarPanel(
-               fileInput(
-                 "trafficfile1",
-                 "Choose CSV file:",
-                 multiple = FALSE,
-                 accept = c("text/csv",
-                            "text/comma-separated-values,text/plain",
-                            ".csv")
-               ),
-               
-               selectInput(
-                 "traffictool",
-                 "Assessment tool used:",
-                 c(
-                   Choose = '',
-                   "RoB 2.0" = "ROB2",
-                   "ROBINS-I" = "ROBINS-I",
-                   "QUADAS-2" = "QUADAS-2"
-                 )
-               ),
-               
-               downloadButton("downloadtrafficlightplot", "Download plot (.png)")
-             ),
-             
-             mainPanel(uiOutput("trafficplotUI"))
+  )
            )
-  )     
-           )
+)
 
 
 
@@ -153,6 +167,11 @@ ui <- navbarPage(
 server <- function(input, output) {
   # library(Cairo)
   # options(shiny.usecairo=TRUE)
+  
+  observeEvent(input$cochrane, {
+    # Change the following line for more examples
+    shinyjs::toggleState("usercolours")
+  })
 
   output$downloadROB2Data <- downloadHandler(
     filename = function() {
