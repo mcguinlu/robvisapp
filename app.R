@@ -6,7 +6,8 @@ library(shinycssloaders)
 options(spinner.color="#820000", spinner.type = 4, spinner.size = 2)
 
 # Define UI for application that draws a histogram
-ui <- tagList(  
+ui <- tagList(
+  tags$head(includeHTML("google-analytics.html")),
   tags$style(type="text/css", 
              ".shiny-output-error { visibility: hidden;}",
              ".shiny-output-error:before { visibility: visible; content: 'An error has occurred. Please double-check your that your selected tool matches the data you uploaded (common problem). If you believe you have found a bug, please contact me! The error is: ' ; }"
