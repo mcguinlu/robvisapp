@@ -77,7 +77,10 @@ ui <- tagList(
         downloadButton("downloadROBINSData", "Download ROBINS example dataset"),
         br(),
         br(),
-        downloadButton("downloadQUADASData", "Download QUADAS example dataset")
+        downloadButton("downloadQUADASData", "Download QUADAS example dataset"),
+        br(),
+        br(),
+        downloadButton("downloadROB1Data", "Download RoB1 example dataset")
         # br(),
         # h4("Example of assessment sheet using ROBINS-I"),
         # tableOutput('robinstable'),
@@ -111,7 +114,8 @@ ui <- tagList(
                    Choose = '',
                    "RoB 2.0" = "ROB2",
                    "ROBINS-I" = "ROBINS-I",
-                   "QUADAS-2" = "QUADAS-2"
+                   "QUADAS-2" = "QUADAS-2",
+                   "RoB 1/Generic" = "ROB1"
                  )
                ),
                actionButton("resettraffic", "Reset"),
@@ -125,6 +129,18 @@ ui <- tagList(
                    "Cochrane colours" = "cochrane",
                    "Colourblind-friendly" = "colourblind"
                  )
+               ),
+               
+               selectInput(
+                 "traffictextsize",
+                 "Choose text size:",
+                 c(
+                   "10",
+                   "12",
+                   "14",
+                   "16"
+                 ),
+                 selected = "12"
                ),
                
                hr(),
@@ -177,7 +193,8 @@ ui <- tagList(
             Choose = '',
             "RoB 2.0" = "ROB2",
             "ROBINS-I" = "ROBINS-I",
-            "QUADAS-2" = "QUADAS-2"
+            "QUADAS-2" = "QUADAS-2",
+            "RoB 1/Generic" = "ROB1"
           )
         ),
         actionButton("resetbarplot", "Reset"),
@@ -199,8 +216,7 @@ ui <- tagList(
             "Colourblind-friendly" = "colourblind"
           )
         ),
-        
-        
+
         hr(),
         h4(tags$b("Download")),
         selectInput(
@@ -243,7 +259,7 @@ server <- function(input, output) {
       paste("ROB2_example", ".csv", sep = "")
     },
     content = function(file) {
-      write.csv(robvis::data_rob, file, row.names = FALSE)
+      write.csv(robvis::data_rob2, file, row.names = FALSE)
     }
   )
   
@@ -265,7 +281,16 @@ server <- function(input, output) {
     }
   )
   
-  output$rob2table <- renderTable(robvis::data_rob)
+  output$downloadROB1Data <- downloadHandler(
+    filename = function() {
+      paste("ROB1_example", ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(robvis::data_rob1, file, row.names = FALSE)
+    }
+  )
+  
+  output$rob2table <- renderTable(robvis::data_rob2)
   output$robinstable <- renderTable(robvis::data_robins)
   output$quadastable <- renderTable(robvis::data_quadas)
   
@@ -276,7 +301,7 @@ summaryplotInput <- reactive({
     req(input$summarytool)
     
     tryCatch({
-      df <- read.csv(input$summaryfile1$datapath,
+    df <- read.csv(input$summaryfile1$datapath,
                      header = TRUE)
     },
     error = function(e) {
@@ -287,7 +312,8 @@ summaryplotInput <- reactive({
                         tool = input$summarytool,
                         overall = input$overall, 
                         weighted = input$weights,
-                        colour = input$barplotcolour))
+                        colour = input$barplotcolour)
+          )
   })
   
 output$summaryplot <- renderPlot({
@@ -300,13 +326,20 @@ output$downloadsummaryplot <- downloadHandler(
       paste0(input$summarytool, ".", input$summarydownloadformat)
     },
     content = function(file) {
-      ggplot2::ggsave(
-        file,
-        plot = summaryplotInput(),
-        device = input$summarydownloadformat,
-        width = 8,
-        height = 2.41,
-        dpi = 800
+      shiny::withProgress(
+        message = paste0("Downloading ", input$summarytool, " figure"),
+        value = 0,
+        {
+          shiny::incProgress(7/10)
+          ggplot2::ggsave(
+          file,
+          plot = summaryplotInput(),
+          device = input$summarydownloadformat,
+          width = 8,
+          height = 2.41,
+          dpi = 800
+          )
+        }
       )
     }
   )
@@ -325,9 +358,16 @@ trafficlightplotInput <- reactive({
     })
 
     
-      robvis::rob_traffic_light(data = trafficdf,
+     robvis::rob_traffic_light(data = trafficdf,
                         tool = input$traffictool,
-                        colour = input$trafficcolour)
+                        colour = input$trafficcolour) +
+       ggplot2::theme(
+         strip.text.x = ggplot2::element_text(size = input$traffictextsize),
+         strip.text.y = ggplot2::element_text(angle = 180, size = input$traffictextsize),
+         plot.caption = ggplot2::element_text(size = input$traffictextsize, hjust = 0),
+         axis.title.x = ggplot2::element_text(size = input$traffictextsize),
+         axis.title.y = ggplot2::element_text(size = input$traffictextsize)
+         )
     
   })
   
@@ -366,15 +406,22 @@ output$downloadtrafficlightplot <- downloadHandler(
       paste0(input$traffictool,".", input$trafficdownloadformat)
     },
     content = function(file) {
-      ggplot2::ggsave(
-        file,
-        plot = trafficlightplotInput(),
-        device = input$trafficdownloadformat,
-        width = 8,
-        height = nrowsin(),
-        units = "in",
-        dpi = 800, 
-        limitsize = FALSE
+      shiny::withProgress(
+        message = paste0("Downloading ", input$traffictool, " figure"),
+        value = 0,
+        {
+          shiny::incProgress(7/10)
+          ggplot2::ggsave(
+          file,
+          plot = trafficlightplotInput(),
+          device = input$trafficdownloadformat,
+          width = 8,
+          height = nrowsin(),
+          units = "in",
+          dpi = 800, 
+          limitsize = FALSE
+        )
+        }
       )
     }
   )

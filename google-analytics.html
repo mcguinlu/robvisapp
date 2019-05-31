@@ -6,4 +6,8 @@
   gtag('js', new Date());
 
   gtag('config', 'UA-139874649-1');
+  
+  $(document).on('click','downloadtrafficlightplot', function() {
+    ga('send', 'event', 'download', 'Traffic light');
+  });
 </script>
