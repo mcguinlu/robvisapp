@@ -5,9 +5,9 @@ account: mcguinlu
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 887345
-bundleId: 2121376
+bundleId: 2191030
 url: https://mcguinlu.shinyapps.io/robvis/
-when: 1559316479.31429
+when: 1561986104.6299
 asMultiple: FALSE
 asStatic: FALSE
 ignoredFiles: data_robins_large.csv

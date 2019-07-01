@@ -29,18 +29,6 @@ ui <- tagList(
         p(
           "This app makes it easy to produce publication quality figures that summarise the risk-of-bias assessments performed as part of a systemtatic review."
         ),
-        p(
-          "This web app is built on the",
-          em("robvis"),
-          "R package, which can be accessed ",
-          a("here.", href = "https://www.github.com/mcguinlu/robvis")
-        ),
-        p(
-          em("robvis"),
-          "forms part of the",
-          a("metaverse", href = "https://www.github.com/rmetaverse"),
-          ", a suite of tools for performing evidence synthesis in R."
-        ),
         br(),
         h4("Required data format"),
         p(
@@ -131,10 +119,14 @@ ui <- tagList(
                  )
                ),
                
+               numericInput("psize",
+                            "Choose point size",
+                            value = 20),
+               
                selectInput(
                  "traffictextsize",
                  "Choose text size:",
-                 c(
+                 c("8",
                    "10",
                    "12",
                    "14",
@@ -157,7 +149,9 @@ ui <- tagList(
                  )
                ),
                
-               downloadButton("downloadtrafficlightplot", "Download plot")
+               downloadButton("downloadtrafficlightplot", "Download plot"),
+               hr(),
+               p("If you use", em("robvis"), "to produce figures for your publication, please remember to cite the tool. A citation can be found in the \"About Us\" tab.")
                
 
              ),
@@ -231,15 +225,75 @@ ui <- tagList(
             )
         ),
         
-        downloadButton("downloadsummaryplot", "Download plot")
+        downloadButton("downloadsummaryplot", "Download plot"),
+        hr(),
+        p("If you use", em("robvis"), "to produce figures for your publication, please remember to cite the tool. A citation can be found in the \"About Us\" tab.")
         
         
       ),
       
       mainPanel(withSpinner(plotOutput("summaryplot")))
+      
     )
+  ),
+
+# Weighted Bar Plot Page =======================================================          
+tabPanel(
+  "About",
+  
+  titlePanel(""),
+  h3("Additional information"),
+  h4("About the tool"),
+  p(
+    em("robvis"),
+    "was developed by Luke McGuinness as part of the",
+    a("Evidence Synthesis Hackathon.", href = "https://www.eshackathon.org/"),
+    "This web app is built on the",
+    em("robvis"),
+    "R package, which can be accessed ",
+    a("here.", href = "https://www.github.com/mcguinlu/robvis"),
+    em("robvis"),
+    "forms part of the",
+    a("metaverse", href = "https://www.github.com/rmetaverse"),
+    ", a suite of tools for performing evidence synthesis in R."
+  ),
+  br(),
+  
+  h4("About me"),
+  p("Luke McGuinness is a National Insitute of Health Research Doctoral Research Fellow in Evidence Synthesis at Bristol Medical School, where he is examining the relationship between blood lipid levels and dementia risk.",
+    "When procrastinating from real work, he is an R (pronounced \"oar\") and open science enthusiast."),
+  p("Luke is part of the Bristol Appraisal and Review of Research (BARR) Group at the University of Bristol, led by Prof. Julian Higgins, which brings together researhers interested in the methodology",
+    "and application of research synthesis methods such as systematic reviews, meta-analysis and critical assessment of research evidence."),
+  br(),
+
+  
+  h3("Citing the tool"),
+  p("If you use", em("robvis"), "to create risk-of-bias plots for your publication, please cite the tool using:"),
+  tags$ul(
+    tags$li("Luke A McGuinness (2019). robvis: An R package and web application for visualising risk-of-bias assessments. https://github.com/mcguinlu/robvis")),
+  
+  br(),
+
+  h3("Acknowledgements"),
+  p("This project would not have been possible without:"),
+  tags$ul(
+    tags$li("Prof. Julian Higgins, who as my main supervisor has been extremely supportive of this project;"),
+    tags$li("Dr. Emily Kothe, who provided help on", em("ggplot"), "coding issues;"),
+    tags$li("Eliza Grames, who create the amazing",em("robvis"), "hex sticker;"),
+    tags$li("The Baby Driver", a("soundtrack,", href="https://open.spotify.com/album/1XaJOcLe3xMQ611SMHtOja"), "which kept me sane while fixing coding bugs.")
+       ),
+  
+  p("Additionally, the following people contributed valuable feedback that contributed to the development of this tool:",
+    "Matthew Page, Alexandra Bannach-Brown, Kyle Hamilton, Charles Gray, Vincent Cheng, Wouter van Amsterdamn, Neal Haddaway and Martin Westgate."),
+ 
+  br(),
+  
+  h3("Funding Statement"),
+  p("Luke is funded by the National Institute for Health Research (NIHR) Doctoral Research Fellowship (DRF-2018-11-ST2-048).",
+    "The views expressed are those of the author(s) and not necessarily those of the NIHR or the Department of Health and Social Care."),
+  img(src="nihr_logo.jpg", align = "centre")
+)
   )
-           )
 )
 
 
@@ -360,7 +414,8 @@ trafficlightplotInput <- reactive({
     
      robvis::rob_traffic_light(data = trafficdf,
                         tool = input$traffictool,
-                        colour = input$trafficcolour) +
+                        colour = input$trafficcolour, 
+                        psize = input$psize) +
        ggplot2::theme(
          strip.text.x = ggplot2::element_text(size = input$traffictextsize),
          strip.text.y = ggplot2::element_text(angle = 180, size = input$traffictextsize),
@@ -381,7 +436,7 @@ nrowspx <- reactive({
   trafficdf <- read.csv(input$trafficfile1$datapath,
                         header = TRUE)
   nrows <- nrow(trafficdf)
-  nrows <- nrows * 70 + 100
+  nrows <- ifelse(nrows * (70/(20/input$psize)) + 100 < 750, 750, nrows * (70/(20/input$psize)))
   return(nrows)
   })
 
@@ -391,7 +446,7 @@ nrowsin <- reactive({
   trafficdf <- read.csv(input$trafficfile1$datapath,
                         header = TRUE)
   nrows <- nrow(trafficdf)
-  nrows <- nrows * 1
+  nrows <- ifelse(nrows * 1/(20/input$psize) < 9, 9, nrows * 1/(20/input$psize))
   return(nrows)
 })
 
@@ -415,7 +470,8 @@ output$downloadtrafficlightplot <- downloadHandler(
           file,
           plot = trafficlightplotInput(),
           device = input$trafficdownloadformat,
-          width = 8,
+          width = (8-(2*(1/(20/input$psize)))),
+          # width = (9 - (100/(80+input$psize))),
           height = nrowsin(),
           units = "in",
           dpi = 800, 
