@@ -272,8 +272,12 @@ tabPanel(
   tags$ul(
     tags$li("Luke A McGuinness (2019). robvis: An R package and web application for visualising risk-of-bias assessments. https://github.com/mcguinlu/robvis")),
   
+  downloadButton("downloadbib", "Download .bib citation"),
+  downloadButton("downloadris", "Download .ris citation"),
+ 
   br(),
-
+  br(),
+  
   h3("Acknowledgements"),
   p("This project would not have been possible without:"),
   tags$ul(
@@ -343,6 +347,36 @@ server <- function(input, output) {
       write.csv(robvis::data_rob1, file, row.names = FALSE)
     }
   )
+  
+  output$downloadROB1Data <- downloadHandler(
+    filename = function() {
+      paste("ROB1_example", ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(robvis::data_rob1, file, row.names = FALSE)
+    }
+  )
+  
+  output$downloadbib <- downloadHandler(
+    filename = function() {
+      paste("citation", ".bib", sep = "")
+    },
+    content = function(file) {
+      file.copy("robviscitation.bib", file)
+    }
+  )
+  
+  output$downloadris <- downloadHandler(
+    filename = function() {
+      paste("citation", ".ris", sep = "")
+    },
+    content = function(file) {
+      file.copy("robviscitation.ris", file)
+    }
+  )
+  
+
+
   
   output$rob2table <- renderTable(robvis::data_rob2)
   output$robinstable <- renderTable(robvis::data_robins)
