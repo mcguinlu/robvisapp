@@ -286,7 +286,7 @@ tabPanel(
   tags$ul(
     tags$li("Prof. Julian Higgins, who as my main supervisor has been extremely supportive of this project;"),
     tags$li("Dr. Emily Kothe, who provided help on", em("ggplot"), "coding issues;"),
-    tags$li("Eliza Grames, who create the amazing",em("robvis"), a("hex sticker", href="https://github.com/mcguinlu/robvis/blob/master/man/figures/robvis_hex_box.png"), ";"),
+    tags$li("Eliza Grames, who create the amazing",em("robvis"), a("hex sticker;", href="https://github.com/mcguinlu/robvis/blob/master/man/figures/robvis_hex_box.png")),
     tags$li("The Baby Driver", a("soundtrack,", href="https://open.spotify.com/album/1XaJOcLe3xMQ611SMHtOja"), "which kept me sane while fixing coding bugs.")
        ),
   
