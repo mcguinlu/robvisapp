@@ -34,7 +34,7 @@ ui <- tagList(
         p(
           
           "To ensure that this app works as expected, the uploaded table must have a certain format.", 
-          "For demonstration purposes, an correctly formatted summary table for each tool is displayed on the right.", 
+          "For demonstration purposes, a correctly formatted summary table for each tool is displayed on the right.", 
           "For clarity, data are laid out as follows:"
         ),
         tags$ul(
@@ -257,6 +257,9 @@ tabPanel(
     a("metaverse", href = "https://www.github.com/rmetaverse"),
     ", a suite of tools for performing evidence synthesis in R."
   ),
+  p("If you have questions about the tool or would like to provide feedback, please email ",
+    a("luke.mcguinness@bristol.ac.uk", href = "mailto:luke.mcguinness@bristol.ac.uk"), 
+    "."),
   br(),
   
   h4("About me"),
@@ -283,7 +286,7 @@ tabPanel(
   tags$ul(
     tags$li("Prof. Julian Higgins, who as my main supervisor has been extremely supportive of this project;"),
     tags$li("Dr. Emily Kothe, who provided help on", em("ggplot"), "coding issues;"),
-    tags$li("Eliza Grames, who create the amazing",em("robvis"), "hex sticker;"),
+    tags$li("Eliza Grames, who create the amazing",em("robvis"), a("hex sticker", href="https://github.com/mcguinlu/robvis/blob/master/man/figures/robvis_hex_box.png"), ";"),
     tags$li("The Baby Driver", a("soundtrack,", href="https://open.spotify.com/album/1XaJOcLe3xMQ611SMHtOja"), "which kept me sane while fixing coding bugs.")
        ),
   
