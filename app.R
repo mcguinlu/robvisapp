@@ -121,7 +121,7 @@ ui <- tagList(
                
                numericInput("psize",
                             "Choose point size",
-                            value = 20),
+                            value = 15),
                
                selectInput(
                  "traffictextsize",
@@ -151,7 +151,7 @@ ui <- tagList(
                
                downloadButton("downloadtrafficlightplot", "Download plot"),
                hr(),
-               p("If you use", em("robvis"), "to produce figures for your publication, please remember to cite the tool. A citation can be found in the \"About Us\" tab.")
+               p("If you use", em("robvis"), "to produce figures for your publication, please remember to cite the tool. A citation can be found in the \"About\" tab.")
                
 
              ),
@@ -227,7 +227,7 @@ ui <- tagList(
         
         downloadButton("downloadsummaryplot", "Download plot"),
         hr(),
-        p("If you use", em("robvis"), "to produce figures for your publication, please remember to cite the tool. A citation can be found in the \"About Us\" tab.")
+        p("If you use", em("robvis"), "to produce figures for your publication, please remember to cite the tool. A citation can be found in the \"About\" tab.")
         
         
       ),
@@ -453,7 +453,6 @@ trafficlightplotInput <- reactive({
        ggplot2::theme(
          strip.text.x = ggplot2::element_text(size = input$traffictextsize),
          strip.text.y = ggplot2::element_text(angle = 180, size = input$traffictextsize),
-         plot.caption = ggplot2::element_text(size = input$traffictextsize, hjust = 0),
          axis.title.x = ggplot2::element_text(size = input$traffictextsize),
          axis.title.y = ggplot2::element_text(size = input$traffictextsize)
          )
