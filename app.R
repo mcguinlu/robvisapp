@@ -13,28 +13,59 @@ ui <- tagList(
              ".shiny-output-error:before { visibility: visible; content: 'An error has occurred. Please double-check your that your selected tool matches the data you uploaded (common problem). If you believe you have found a bug, please contact me! The error is: ' ; }"
   ),
   shinyjs::useShinyjs(),  # Include shinyjs
-  navbarPage( "robvis",
+  navbarPage(
+    title = "robvis",
+    theme = shinythemes::shinytheme("yeti"),
   
 # Home Page ====================================================================          
   tabPanel(
     "Home",
+
+      h1(strong(em("robvis"))),
+      h3("Create publication quality risk-of-bias assessment figures"),
+      
+      hr(),
+
     
-    titlePanel("Welcome!"),
     
     sidebarLayout(
       sidebarPanel(
-        h4(
-          "Introducing", em("robvis,"),"a tool to visualise risk of bias assessments"
-        ),
-        p(
-          "This app makes it easy to produce publication quality figures that summarise the risk-of-bias assessments performed as part of a systemtatic review."
-        ),
+        h3(strong("About")),
+        p(em("robvis"),"makes it easy to produce high quality figures that summarise the risk-of-bias assessments performed as part of a systematic review or research synthesis project."),
         br(),
-        h4("Required data format"),
-        p(
+        hr(),
+        h3(strong("Citation")),
+        p("If you use", em("robvis"), "to create risk-of-bias plots for your study, please remember to cite the tool."),
+        p("More details and downloadable citation files can be found in the \"About\" tab."),
+        
+        
+        br(),
+        hr(),
+
+        h3(strong("Found a bug?")),
+        p("Please ", a(href="mailto:luke.mcguinness@bristol.ac.uk", "email me")),
+        p(strong("OR")),
+        p("Log an issue on", a(href="https://github.com/mcguinlu/robvis/issues", "GitHub")),
+        br(),
+        width = 3
+
+      ),
+      mainPanel(
+        h3(strong("Using the tool")),
+        h4(strong("Example datasets")),
+        p("To help familiarise users with the tool, we have provided four example datasets which can be downloaded here:"),
+        p(downloadButton("downloadROB2Data", "RoB2.0 dataset"),
           
-          "To ensure that this app works as expected, the uploaded table must have a certain format.", 
-          "For demonstration purposes, a correctly formatted summary table for each tool is displayed on the right.", 
+          downloadButton("downloadROBINSData", "ROBINS dataset"),
+          
+          downloadButton("downloadQUADASData", "QUADAS dataset"),
+          
+          downloadButton("downloadROB1Data", "RoB1 dataset")),
+        br(),        
+        h4(strong("Setting up your own data")),
+        p(strong("Required data format")),
+        p("To ensure that this app works as expected, the uploaded risk-of-bias assessment summary table must follow a certain format.", 
+          "For demonstration purposes, a correctly formatted summary table for the ROB2.0 tool is displayed below.", 
           "For clarity, data are laid out as follows:"
         ),
         tags$ul(
@@ -51,30 +82,11 @@ ui <- tagList(
           tags$li(
             "The final column contains the \"Weight\" variable, often study sample size or precision."
           )
-        )
+        ),
+       p(strong("Example ROB2.0 summary table:")),
 
-      ),
-      mainPanel(
-        h4("Example of summary assessment sheet using ROB2"),
-        tableOutput('rob2table'),
-        br(),
-        h4("Example datasets for use with this app can be downloaded here:"),
-        downloadButton("downloadROB2Data", "Download RoB2.0 example dataset"),
-        br(),
-        br(),
-        downloadButton("downloadROBINSData", "Download ROBINS example dataset"),
-        br(),
-        br(),
-        downloadButton("downloadQUADASData", "Download QUADAS example dataset"),
-        br(),
-        br(),
-        downloadButton("downloadROB1Data", "Download RoB1 example dataset")
-        # br(),
-        # h4("Example of assessment sheet using ROBINS-I"),
-        # tableOutput('robinstable'),
-        # br(),
-        # h4("Example of assessment sheet using QUADAS-2"),
-        # tableOutput('quadastable')
+        tableOutput('rob2table')
+        
       )
     )
   ),
@@ -246,7 +258,7 @@ tabPanel(
   h4("About the tool"),
   p(
     em("robvis"),
-    "was developed by Luke McGuinness as part of the",
+    "was developed by Luke McGuinness, drawing on work that took place during the",
     a("Evidence Synthesis Hackathon.", href = "https://www.eshackathon.org/"),
     "This web app is built on the",
     em("robvis"),
@@ -299,8 +311,13 @@ tabPanel(
   p("Luke is funded by the National Institute for Health Research (NIHR) Doctoral Research Fellowship (DRF-2018-11-ST2-048).",
     "The views expressed are those of the author(s) and not necessarily those of the NIHR or the Department of Health and Social Care."),
   img(src="nihr_logo.jpg", align = "centre")
+),
+# FAQS =======================================================          
+tabPanel(
+  "FAQs",
+  h1(strong("Coming soon. . . . "))
 )
-  )
+)
 )
 
 
@@ -381,10 +398,8 @@ server <- function(input, output) {
 
 
   
-  output$rob2table <- renderTable(robvis::data_rob2)
-  output$robinstable <- renderTable(robvis::data_robins)
-  output$quadastable <- renderTable(robvis::data_quadas)
-  
+  output$rob2table <- renderTable(head(robvis::data_rob2,4))
+
   
 # Summary plot and download  
 summaryplotInput <- reactive({
