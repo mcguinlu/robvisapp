@@ -201,7 +201,8 @@ ui <- tagList(
             "RoB 2.0" = "ROB2",
             "ROBINS-I" = "ROBINS-I",
             "QUADAS-2" = "QUADAS-2",
-            "RoB 1/Generic" = "ROB1"
+            "RoB 1/Generic" = "ROB1",
+            "ROBINS-I Online" = "ROBINS-I Online"
           )
         ),
         actionButton("resetbarplot", "Reset"),
