@@ -12,7 +12,8 @@ ui <- tagList(
              ".shiny-output-error { visibility: hidden;}",
              ".shiny-output-error:before { visibility: visible; content: 'An error has occurred. Please double-check your that your selected tool matches the data you uploaded (common problem). If you believe you have found a bug, please contact me! The error is: ' ; }"
   ),
-  shinyjs::useShinyjs(),  # Include shinyjs
+  shinyjs::useShinyjs(),# Include shinyjs
+  rintrojs::introjsUI(), # Include rintrojs
   navbarPage(
     title = "robvis",
     theme = shinythemes::shinytheme("yeti"),
@@ -115,7 +116,7 @@ ui <- tagList(
                    "RoB 2.0" = "ROB2",
                    "ROBINS-I" = "ROBINS-I",
                    "QUADAS-2" = "QUADAS-2",
-                   "Generic (RoB1)" = "ROB1",
+                   "Generic" = "Generic",
                    "ROBINS-I Online" = "ROBINS-I Online"
                  )
                ),
@@ -201,7 +202,7 @@ ui <- tagList(
             "RoB 2.0" = "ROB2",
             "ROBINS-I" = "ROBINS-I",
             "QUADAS-2" = "QUADAS-2",
-            "RoB 1/Generic" = "ROB1",
+            "Generic" = "Generic",
             "ROBINS-I Online" = "ROBINS-I Online"
           )
         ),
