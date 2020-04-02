@@ -7,5 +7,5 @@ For clarity, your data should be laid out as follows:
   * The final column contains the "Weight" variable often study sample size or precision.  
   
 
-#### __Excel templates__                
+#### __Excel example datasets/templates__                
 The quickest and easiest way to correctly set up your risk-of-bias assessment summary table is to replace the example data contained in the Excel templates below with your own data, and then upload the file to the app. Alternatively, you can enter the data directly into the app by hand. Templates for the three major risk-of-bias tools supported by the app are available, in addition to a "Generic" template for use with any domain-bases assessment tool (including ROB1).
