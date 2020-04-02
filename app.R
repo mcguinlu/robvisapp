@@ -178,7 +178,7 @@ ui <- tagList(
           
           
           hidden(div(
-            id = "test",
+            id = "divid1",
             hr(),
             fluidRow(
               column(width = 6, h4(tags$b("Load data"))),
@@ -194,11 +194,11 @@ ui <- tagList(
             ),
             fileInput("data",
                       "Choose data file:",
-                      multiple = FALSE,),
-            p(
+                      multiple = FALSE,))),
+            hidden(div(id = "divid2",p("If you wish the explore the apps functionality, download one of the example datasets available on the \"Home\" page and upload it here. ",
               "Alternatively, you can ",
-              actionLink("enter_manually", "enter your data manually."),
-              hr(),
+              actionLink("enter_manually", "enter your data manually.")))),
+          hidden(div(id = "divid3",hr(),
               span(p(textOutput("warnings_header")), style = "color:red"),
               span(p(textOutput(
                 "duplicate_studies"
@@ -209,8 +209,7 @@ ui <- tagList(
               br(),
               actionButton("gen_plots", "Generate Plots"),
               actionButton("reset", "Reset"),
-              br(),
-            )
+              br()
           ))
         ),
         mainPanel(fluidRow(
@@ -230,6 +229,7 @@ ui <- tagList(
     tabPanel("Plots",
              value = "plots",
              tabsetPanel(
+               id = "results-subpanel",
                tabPanel(
                  "Traffic Light Plot",
                  value = "tf-panel",
@@ -424,11 +424,19 @@ server <- function(session, input, output) {
   
   
   # Navigation --------------------------------------------------------------
-  
+
+  # Build data upload sidebar programmatically
   observeEvent(input$tool, {
     if (input$tool != '') {
-      show("test")
-    }
+      show("divid1")
+      show("divid3") 
+      if (input$tool != 'Generic') {
+          show("divid2")
+      } else {
+        hide("divid2")
+      }
+      }
+    
     reset(id = 'data')
     hide(selector = "#mytabsetpanel li a[data-value=plots]")
     hide("new_row")
@@ -470,7 +478,9 @@ server <- function(session, input, output) {
     reset(id = 'data')
     hide(selector = "#mytabsetpanel li a[data-value=plots]")
     hide("new_row")
-    hide("test")
+    hide("divid1")
+    hide("divid2")
+    hide("divid3")
     reset(id = 'data')
     updateSelectInput(session = session,
                       inputId = "tool",
@@ -621,7 +631,7 @@ server <- function(session, input, output) {
     }
     
     if (input$tool == "Generic") {
-      rv$values = c("High", "Unclear", "Low", "No information")
+      rv$values = c("High", "Unclear","Some concerns", "Moderate", "Low", "No information")
 
     }
     
@@ -697,7 +707,6 @@ server <- function(session, input, output) {
   
   # Wrong levels of bias
   
-  
   observe({
     req(input$tool)
     req(rv$data)
@@ -710,7 +719,7 @@ server <- function(session, input, output) {
         paste0(
           "WARNING: Invalid judgement. At least one cell contains an inappropriate level of judgement for the ",
           input$tool,
-          " tool.",
+          " tool. The relevant cell(s) are marked in red in the table.",
           " Acceptable levels of judment are: ",
           paste(rv$values, collapse = ", "),
           "."
@@ -773,6 +782,8 @@ server <- function(session, input, output) {
       )
       rv$new_row = rv$data
     }
+    
+    
     
   })
   
@@ -851,6 +862,17 @@ server <- function(session, input, output) {
           
         }
       }
+      
+      for (col in 2:(dim(tmp)[2]-1)) {
+        for (row in 1:dim(tmp)[1]) {
+          if ((tmp[row,col] %in% rv$values)==FALSE) {
+            tmp[row, col] <- paste0("<span style = \"color:red\">",tmp[row, col],"</span>")
+          }
+        }
+        
+      }
+      
+      
       
       rv$data <- tmp
     },
