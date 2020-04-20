@@ -105,9 +105,7 @@ ui <- tagList(
                   actionButton("gotodata", "Upload your data")
                 )
               ),
-              
               includeMarkdown("text/using.md"),
-              br(),
               div(
                 align = "center",
                 
@@ -121,6 +119,7 @@ ui <- tagList(
                   downloadButton("downloadROB1Data", "Generic dataset")
                 )
               ),
+              br(),
               includeMarkdown("text/funding.md")
               
               
@@ -276,6 +275,15 @@ ui <- tagList(
                        selected = "12"
                      ),
                      
+                     hidden(div(id = "generic_levels",
+                     helpText("Edit risk-of-bias judgement labels:"),
+                     div(style = "margin-top:-30px"),
+                     textInput("level_low", "", value = "Low"),
+                     div(style = "margin-top:-30px"),
+                     textInput("level_moderate", "", value = "Unclear"),
+                     div(style = "margin-top:-30px"),
+                     textInput("level_high", "", value = "High"))),
+
                      hr(),
                      h4(tags$b("Download")),
                      selectInput(
@@ -432,8 +440,10 @@ server <- function(session, input, output) {
       show("divid3") 
       if (input$tool != 'Generic') {
           show("divid2")
+          hide("generic_levels")
       } else {
         hide("divid2")
+        show("generic_levels")
       }
       }
     
@@ -1001,8 +1011,28 @@ server <- function(session, input, output) {
   # Traffic light plot ------------------------------------------------------
   #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
   
+  observeEvent(input$tool,{
+  req(input$trafficcolour)  
+  if (input$trafficcolour == "colourblind") {
+    rv$low_colour <- "#fed98e"
+    rv$concerns_colour <- "#fe9929"
+    rv$high_colour <- "#d95f0e"
+    rv$critical_colour <- "#993404"
+    rv$ni_colour <- "#ffffff"
+  }
+  if (input$trafficcolour == "cochrane") {
+    rv$low_colour <- "#02C100"
+    rv$concerns_colour <- "#E2DF07"
+    rv$high_colour <- "#BF0000"
+    rv$critical_colour <- "#820000"
+    rv$ni_colour <- "#4EA1F7"
+  }
+  })
+  
   # Define TF plot object ----
   trafficlightplotInput <- reactive({
+    
+    if (input$tool != "Generic") {
     robvis::rob_traffic_light(
       data = rv$data,
       tool = input$tool,
@@ -1015,6 +1045,48 @@ server <- function(session, input, output) {
         axis.title.x = ggplot2::element_text(size = input$traffictextsize),
         axis.title.y = ggplot2::element_text(size = input$traffictextsize)
       )
+    } else {
+      robvis::rob_traffic_light(
+        data = rv$data,
+        tool = input$tool,
+        colour = input$trafficcolour,
+        psize = input$psize
+      ) + 
+        ggplot2::scale_colour_manual(
+          values = c(
+            l = rv$low_colour,
+            s = rv$concerns_colour,
+            h = rv$high_colour,
+            c = rv$critical_colour,
+            n = rv$ni_colour
+          ),
+          labels = c(
+            l = input$level_low,
+            s = input$level_moderate,
+            h = input$level_high,
+            c = "Critical",
+            n = "No information"
+          )
+        ) + ggplot2::scale_shape_manual(
+          values = c(
+            l = 43,
+            s = 45,
+            h = 120,
+            c = 33,
+            n = 63
+          ),
+          labels = c(l = input$level_low,
+                     s = input$level_moderate,
+                     h = input$level_high,
+                     c = "Critical",
+                     n="No information")) +
+        ggplot2::theme(
+          strip.text.x = ggplot2::element_text(size = input$traffictextsize),
+          strip.text.y.left = ggplot2::element_text(size = input$traffictextsize),
+          axis.title.x = ggplot2::element_text(size = input$traffictextsize),
+          axis.title.y = ggplot2::element_text(size = input$traffictextsize)
+        )
+    }
     
   })
   
