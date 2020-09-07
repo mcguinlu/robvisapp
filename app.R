@@ -18,6 +18,10 @@
 # Library calls
 source("R/library.R")
 
+faq_df <- rio::import("www/faq.xlsx")
+
+faq_df[1,2] <- includeMarkdown("www/faq_answers/q1.Rmd")
+
 ###########################################################################
 # User interface ----------------------------------------------------------
 ###########################################################################
@@ -283,7 +287,7 @@ ui <- tagList(
                      
                      hidden(div(id = "generic_levels",
                      hr(),            
-                     p("Edit risk-of-bias judgement labels:"),
+                     p("Edit figure judgement labels:"),
                      div(style = "margin-top:-30px"),
                      textInput("level_low", "", value = "Low"),
                      div(style = "margin-top:-30px"),
@@ -291,9 +295,19 @@ ui <- tagList(
                      div(style = "margin-top:-30px"),
                      textInput("level_high", "", value = "High"),
                      div(style = "margin-top:-30px"),
+                     textInput("level_critical", "", value = "Critical"),
+                     div(style = "margin-top:-30px"),
                      textInput("level_ni", "", value = "No information"),
+                     div(style = "margin-top:-30px"),
+                     textInput("level_na", "", value = "Not applicable"),
+                     div(style = "margin-top:-30px"),
+                     textInput("y_title", "", value = "Study"),
+                     div(style = "margin-top:-30px"),
+                     textInput("x_title", "", value = "Risk of bias"),
+                     div(style = "margin-top:-30px"),
+                     textInput("judgement_title", "", value = "Judgement"),
+                     
                      actionButton("update_labels", "Update labels"))),
-
                      hr(),
                      h4(tags$b("Download")),
                      selectInput(
@@ -440,10 +454,27 @@ ui <- tagList(
       h3("Acknowledgements"),
       includeMarkdown("text/acknowledgements.md"),
       br(),
-      br()
+      br(),
+    ),
+    # FAQ Page =======================================================
+    tabPanel("FAQ",
+             value = "faq",
+    h3("Frequently Asked Questions"),         
+     column(width = 6,
+            div(
+      faq::faq(data = faq_df,elementId = "faq",width = "100%", faqtitle = "")
+    )),
+    column(width = 6,
+           div(
+           faq::faq(data = faq_df, elementId = "faq2",width = "100%", faqtitle = "")
     )
+    )
+      
+    )
+    
   )
 )
+
 
 
 
@@ -689,7 +720,7 @@ server <- function(session, input, output) {
     }
     
     if (input$tool == "Generic") {
-      rv$values = c("High", "Unclear","Some concerns", "Moderate", "Low", "No information", "Not applicable")
+      rv$values = c("Critical","High", "Unclear","Some concerns", "Moderate", "Low", "No information", "Not applicable")
 
     }
     
@@ -1188,40 +1219,20 @@ server <- function(session, input, output) {
         data = rv$data,
         tool = input$tool,
         colour = input$trafficcolour,
-        psize = input$psize
+        psize = input$psize, 
+        x_title = isolate(input$x_title),
+        y_title = isolate(input$x_title),
+        judgement_title = isolate(input$judgement_title),
+        judgement_labels = c(
+          isolate(input$level_critical),
+          isolate(input$level_high),
+          isolate(input$level_moderate),
+          isolate(input$level_low),
+          isolate(input$level_ni),
+          isolate(input$level_ni)
+        )
+
       ) + 
-        ggplot2::scale_colour_manual(
-          values = c(
-            l = rv$low_colour,
-            s = rv$concerns_colour,
-            h = rv$high_colour,
-            c = rv$critical_colour,
-            n = rv$ni_colour, 
-            x = rv$na_colour
-          ),
-          labels = c(
-            l = isolate(input$level_low),
-            s = isolate(input$level_moderate),
-            h = isolate(input$level_high),
-            c = "Critical",
-            n = isolate(input$level_ni), 
-            x = "Not applicable"
-          )
-        ) + ggplot2::scale_shape_manual(
-          values = c(
-            l = 43,
-            s = 45,
-            h = 120,
-            c = 33,
-            n = 63, 
-            x = 32
-          ),
-          labels = c(l = isolate(input$level_low),
-                     s = isolate(input$level_moderate),
-                     h = isolate(input$level_high),
-                     c = "Critical",
-                     n = isolate(input$level_ni), 
-                     x = "Not applicable")) +
         ggplot2::theme(
           strip.text.x = ggplot2::element_text(size = input$traffictextsize),
           strip.text.y.left = ggplot2::element_text(size = input$traffictextsize),
