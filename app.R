@@ -112,7 +112,8 @@ ui <- tagList(
                   
                   downloadButton("downloadROB2ClusterData", "RoB2.0 (Cluster) dataset"),
                   
-                  downloadButton("downloadROBINSData", "ROBINS dataset"),
+                  downloadButton("downloadROBINSData", "ROBINS-I dataset"),
+                  downloadButton("downloadROBINSEData", "ROBINS-E dataset"),
                   
                   br(),
                   br(),
@@ -647,10 +648,19 @@ server <- function(session, input, output) {
   
   output$downloadROBINSData <- downloadHandler(
     filename = function() {
-      paste("ROBINS_example", ".xlsx", sep = "")
+      paste("ROBINS_I_example", ".xlsx", sep = "")
     },
     content = function(file) {
-      rio::export(robvis::data_robins[,c(1:9)], file, row.names = FALSE)
+      rio::export(robvis::data_robins_i[,c(1:9)], file, row.names = FALSE)
+    }
+  )
+  
+  output$downloadROBINSEData <- downloadHandler(
+    filename = function() {
+      paste("ROBINS_E_example", ".xlsx", sep = "")
+    },
+    content = function(file) {
+      rio::export(robvis::data_robins_e[,c(1:9)], file, rowNames = FALSE)
     }
   )
   
