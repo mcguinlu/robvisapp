@@ -1,5 +1,3 @@
-### Acknowledgements
-
 This project would not have been possible without:
   * Prof. Julian Higgins, who as my main supervisor has been extremely supportive of this project;
   * Dr. Emily Kothe, who provided help on `ggplot` coding issues;

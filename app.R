@@ -36,8 +36,7 @@ ui <- tagList(
   shinyjs::useShinyjs(),
   use_waiter(),
   use_waitress(color = "#333333"),
-  useShinyalert(),
-  
+
   # Define navbar page
   navbarPage(
     id = "mytabsetpanel",
@@ -119,11 +118,11 @@ ui <- tagList(
                   br(),
                   
                   downloadButton("downloadQUADASData", "QUADAS dataset"),
+                  downloadButton("downloadQUIPSData", "QUIPS dataset"),
                   
                   downloadButton("downloadROB1Data", "Generic dataset")
                 )
-              ),
-              br(),
+              )
 
               
               
@@ -152,6 +151,8 @@ ui <- tagList(
       value = "data",
       sidebarLayout(
         sidebarPanel(
+
+          
           fluidRow(
             column(width = 6, h4(tags$b(
               "Select assessment tool"
@@ -172,11 +173,12 @@ ui <- tagList(
             c(
               Choose = '',
               "RoB 2.0" = "ROB2",
-              "RoB 2.0 Cluster (Traffic-light plot only)" = "ROB2-Cluster",
               "ROBINS-I" = "ROBINS-I",
+              "ROBINS-E" = "ROBINS-E",
               "QUADAS-2" = "QUADAS-2",
+              "RoB 2.0 Cluster (Traffic-light plot only)" = "ROB2-Cluster",
+              "QUIPS" = "QUIPS",
               "Generic" = "Generic"
-              # "ROBINS-I Online" = "ROBINS-I Online"
             )
           ),
           
@@ -198,7 +200,24 @@ ui <- tagList(
             ),
             fileInput("data",
                       "Choose data file:",
-                      multiple = FALSE,))),
+                      multiple = FALSE,),
+            hr(),
+            fluidRow(
+              column(width = 6, h4(tags$b("Data options"))),
+              column(
+                width = 6,
+                align = "right",
+                actionButton(
+                  "options_help",
+                  label = "Help",
+                  icon = icon("question-circle")
+                )
+              )
+            ),
+            checkboxInput("overall","My data contains an \"Overall\" column", value = TRUE),
+            checkboxInput("weight","My data contains an \"Weight\" column", value = FALSE),
+            hr()
+          )),
             hidden(div(id = "divid2",p("If you wish the explore the apps functionality, download one of the example datasets available on the \"Home\" page and upload it here. ",
               "Alternatively, you can ",
               actionLink("enter_manually", "enter your data manually.")))),
@@ -207,11 +226,11 @@ ui <- tagList(
               span(p(textOutput(
                 "duplicate_studies"
               )), style = "color:red"),
+              span(p(textOutput("no_weights")), style = "color:red"),
               span(p(textOutput("wrong_ncol")), style = "color:red"),
               span(p(textOutput("wrong_levels")), style = "color:red"),
               span(p(textOutput("no_overall")), style = "color:red"),
-              
-              br(),
+                            
               actionButton("gen_plots", "Generate Plots"),
               actionButton("reset", "Reset"),
               br()
@@ -268,7 +287,7 @@ ui <- tagList(
                      
                      numericInput("psize",
                                   "Choose point size:",
-                                  value = 15),
+                                  value = 10),
                      
                      selectInput(
                        "traffictextsize",
@@ -282,8 +301,7 @@ ui <- tagList(
                      ),
                      
                      hidden(div(id = "generic_levels",
-                     hr(),            
-                     p("Edit risk-of-bias judgement labels:"),
+                     p("Edit figure judgement labels:"),
                      div(style = "margin-top:-30px"),
                      textInput("level_low", "", value = "Low"),
                      div(style = "margin-top:-30px"),
@@ -291,9 +309,20 @@ ui <- tagList(
                      div(style = "margin-top:-30px"),
                      textInput("level_high", "", value = "High"),
                      div(style = "margin-top:-30px"),
+                     textInput("level_critical", "", value = "Critical"),
+                     div(style = "margin-top:-30px"),
                      textInput("level_ni", "", value = "No information"),
+                     div(style = "margin-top:-30px"),
+                     textInput("level_na", "", value = "Not applicable"),
+                     div(style = "margin-top:-30px"),
+                     textInput("y_title", "", value = "Study"),
+                     div(style = "margin-top:-30px"),
+                     textInput("x_title", "", value = "Risk of bias"),
+                     div(style = "margin-top:-30px"),
+                     textInput("judgement_title", "", value = "Judgement"),
+                     
                      actionButton("update_labels", "Update labels"))),
-
+                                  
                      hr(),
                      h4(tags$b("Download")),
                      selectInput(
@@ -326,12 +355,13 @@ ui <- tagList(
                
                # Weighted Bar Plot Page =======================================================
                tabPanel(
-                 "Weighted Summary Plot",
+                 "Summary Plot",
                  value = "sum-tab",
                  
                  sidebarLayout(
                    sidebarPanel(
-                     h3("Weighted Summary Plot"),
+                     h3("Summary Plot"),
+                     textOutput("weighted_note"),
                      hr(),
                      fluidRow(
                        column(width = 6, h4(tags$b("Options"))),
@@ -345,16 +375,7 @@ ui <- tagList(
                          )
                        )
                      ),
-                     
-                     
-                     checkboxInput("weights",
-                                   "Use weights (strongly recommended)?",
-                                   value = TRUE),
-                     
-                     checkboxInput("overall",
-                                   "Include overall risk of bias?",
-                                   value = TRUE),
-                     
+
                      selectInput(
                        "barplotcolour",
                        "Choose colour scheme:",
@@ -401,7 +422,7 @@ ui <- tagList(
                      
                    ),
                    
-                   mainPanel(withSpinner(plotOutput("summaryplot")))
+                   mainPanel(plotOutput("summaryplot"))
                    
                  )
                )
@@ -440,10 +461,12 @@ ui <- tagList(
       h3("Acknowledgements"),
       includeMarkdown("text/acknowledgements.md"),
       br(),
-      br()
+      br(),
     )
+    # FAQ Page =======================================================
   )
 )
+
 
 
 
@@ -526,6 +549,8 @@ server <- function(session, input, output) {
     hide("divid2")
     hide("divid3")
     reset(id = 'data')
+    reset(id = 'overall')
+    reset(id = 'weight')
     updateSelectInput(session = session,
                       inputId = "tool",
                       selected = "")
@@ -540,6 +565,18 @@ server <- function(session, input, output) {
       modalDialog(
         title = h3(strong("Choosing your tool")),
         includeMarkdown("text/help_tool.md"),
+        easyClose = TRUE,
+        size = "l",
+        footer = modalButton("Dismiss")
+      )
+    )
+  })
+  
+  observeEvent(input$options_help, {
+    showModal(
+      modalDialog(
+        title = h3(strong("Data options")),
+        includeMarkdown("text/help_options.md"),
         easyClose = TRUE,
         size = "l",
         footer = modalButton("Dismiss")
@@ -595,7 +632,7 @@ server <- function(session, input, output) {
       paste("ROB2_example", ".xlsx", sep = "")
     },
     content = function(file) {
-      rio::export(robvis::data_rob2, file, row.names = FALSE)
+      rio::export(robvis::data_rob2[,c(1:7)], file, row.names = FALSE)
     }
   )
   
@@ -604,7 +641,7 @@ server <- function(session, input, output) {
       paste("ROB2_Cluster_example", ".xlsx", sep = "")
     },
     content = function(file) {
-      rio::export(robvis::data_rob2_cluster, file, row.names = FALSE)
+      rio::export(robvis::data_rob2_cluster[,c(1:8)], file, row.names = FALSE)
     }
   )
   
@@ -613,7 +650,7 @@ server <- function(session, input, output) {
       paste("ROBINS_example", ".xlsx", sep = "")
     },
     content = function(file) {
-      rio::export(robvis::data_robins, file, row.names = FALSE)
+      rio::export(robvis::data_robins[,c(1:9)], file, row.names = FALSE)
     }
   )
   
@@ -622,7 +659,16 @@ server <- function(session, input, output) {
       paste("QUADAS_example", ".xlsx", sep = "")
     },
     content = function(file) {
-      rio::export(robvis::data_quadas, file, row.names = FALSE)
+      rio::export(robvis::data_quadas[,c(1:6)], file, row.names = FALSE)
+    }
+  )
+  
+  output$downloadQUIPSData <- downloadHandler(
+    filename = function() {
+      paste("QUIPS_example", ".xlsx", sep = "")
+    },
+    content = function(file) {
+      rio::export(robvis::data_quips[,c(1:8)], file, row.names = FALSE)
     }
   )
   
@@ -631,7 +677,7 @@ server <- function(session, input, output) {
       paste("Generic_example", ".xlsx", sep = "")
     },
     content = function(file) {
-      rio::export(robvis::data_rob1, file, row.names = FALSE)
+      rio::export(robvis::data_rob1[,c(1:9)], file, row.names = FALSE)
     }
   )
   
@@ -653,7 +699,7 @@ server <- function(session, input, output) {
     }
   )
   
-  output$rob2table <- renderTable(head(robvis::data_rob2, 4))
+  output$rob2table <- renderTable(head(robvis::data_rob2[,c(1:7)], 4))
   
   
   # Data handling -----------------------------------------------------------
@@ -664,12 +710,12 @@ server <- function(session, input, output) {
   observe({
     if (input$tool == "ROB2") {
       rv$values = c("High", "Some concerns", "Low", "No information")
-      rv$domain_text = "8: a \"Study\" column, 5 \"Domain\" columns, an \"Overall\" column, and a \"Weight\" column."
+      rv$columns = 8
     }
     
     if (input$tool == "ROB2-Cluster") {
       rv$values = c("High", "Some concerns", "Low", "No information", "Not applicable")
-      rv$domain_text = "8: a \"Study\" column, 6 \"Domain\" columns, an \"Overall\" column, and a \"Weight\" column."
+      rv$columns = 9
     }
     
     if (input$tool == "ROBINS-I") {
@@ -678,22 +724,63 @@ server <- function(session, input, output) {
                     "Moderate",
                     "Low",
                     "No information")
-      rv$domain_text = "10: a \"Study\" column, 7 \"Domain\" columns, an \"Overall\" column, and a \"Weight\" column."
+      rv$columns = 10
+      
+    }
+    
+    if (input$tool == "ROBINS-E") {
+      rv$values = c("Very high",
+                    "High",
+                    "Some concerns",
+                    "Low",
+                    "No information")
+      rv$columns = 10
       
     }
     
     if (input$tool == "QUADAS-2") {
       rv$values = c("High", "Some concerns", "Low", "No information")
-      rv$domain_text = "7: a \"Study\" column, 4 \"Domain\" columns, an \"Overall\" column, and a \"Weight\" column."
-      
+      rv$columns = 7
+    }
+    
+    if (input$tool == "QUIPS") {
+      rv$values = c("High", "Moderate", "Low", "No information")
+      rv$columns = 9
     }
     
     if (input$tool == "Generic") {
-      rv$values = c("High", "Unclear","Some concerns", "Moderate", "Low", "No information", "Not applicable")
-
+      rv$values = c("Critical","High", "Unclear","Some concerns", "Moderate", "Low", "No information", "Not applicable")
+      rv$columns = ncol(rv$data)
     }
     
     
+  })
+  
+  observe({
+    if (!input$overall & !input$weight) {
+      rv$col_num = rv$columns - 2
+      rv$domain_text = paste0(rv$col_num, ": a \"Study\" column and ", rv$columns - 3," \"Domain\" columns.")
+      rv$var_ind <- "neither"
+    }
+    
+    if (!input$overall & input$weight) {
+      rv$col_num = rv$columns - 1
+      rv$domain_text = paste0(rv$col_num, ": a \"Study\" column, ", rv$columns - 3," \"Domain\" columns, and a \"Weight\" column.")
+      rv$var_ind <- "weight"
+    }
+    
+    if (input$overall & !input$weight) {
+      rv$col_num = rv$columns - 1
+      rv$domain_text = paste0(rv$col_num, ": a \"Study\" column, ", rv$columns - 3," \"Domain\" columns, and an \"Overall\" column.")
+      rv$var_ind <- "overall"
+    }
+    
+    if (input$overall & input$weight) {
+      rv$col_num = rv$columns
+      rv$domain_text = paste0(rv$col_num, ": a \"Study\" column, ", rv$columns - 3," \"Domain\" columns, an \"Overall\" column and a \"Weight\" column.")
+      rv$var_ind <- "both"
+      }
+
   })
   
   
@@ -734,24 +821,38 @@ server <- function(session, input, output) {
     rv$warnings$duplicate_studies
   })
   
+  
+  # If weighted, last column should contain numbers
+  observe({
+    req(rv$data)
+    if ((rv$var_ind %in% c("both","weight")) && unique(grepl("^[-]{0,1}[0-9]{0,}.{0,1}[0-9]{1,}$",
+                                                           rv$data[[ncol(rv$data)]])) == FALSE && is.null(rv$warnings$wrong_ncol)) {
+      rv$warnings$no_weights <-
+        "WARNING: No weights found. You specified that the dataset should contain a \"Weight\" column, but no such column found."
+    } else {
+      rv$warnings$no_weights <- NULL
+    }
+  })
+  
+  output$no_weights <- renderText({
+    rv$warnings$no_weights
+  })
+  
   # Wrong number of columns
   observe({
     req(input$tool)
     req(rv$data)
     
-    if ((input$tool == "ROB2" &&
-         ncol(rv$data) != 8) |
-        (input$tool == "ROBINS-I" &&
-         ncol(rv$data) != 10) |
-        (input$tool == "QUADAS-2" && ncol(rv$data) != 7)) {
+    if ((input$tool != "Generic" && ncol(rv$data) != rv$col_num)) {
       rv$warnings$wrong_ncol <-
         paste0(
-          "WARNING: Incorrect number of columns. The number of columns in your data does not match the number expected for the ",
+          "WARNING: Incorrect number of columns in uploaded. The number of columns in your data does not match the number expected for the ",
           input$tool,
-          " tool.",
-          " The expected number of domains for this tool is ",
+          " tool, using the options defined above.",
+          " The expected number of domains is ",
           rv$domain_text,
-          " Please click the question mark beside \"Load data\" for more information on the number of domains expected for each tool."
+          "Please double-check your data and the options specified in \"Data options\". ",
+          "Click the question mark beside \"Load data\" for more information on the number of domains expected for each tool."
         )
     } else {
       rv$warnings$wrong_ncol <- NULL
@@ -1049,6 +1150,16 @@ server <- function(session, input, output) {
   #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
   # Summary plot ------------------------------------------------------------
   #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
+  
+  output$weighted_note <- renderText({
+    if (input$weight) {
+      NULL
+    } else {
+      "\nNOTE: As no weights were included in the uploaded data, this is an unweighted barplot."
+    }
+  })
+  
+  
   observeEvent(input$barplotcolour,{
     input$tool
     if (input$barplotcolour == "colourblind") {
@@ -1067,6 +1178,7 @@ server <- function(session, input, output) {
     }
   })
   
+  
   # Define summary plot object
   summaryplotInput <- reactive({
     input$update_labels_bar
@@ -1076,7 +1188,7 @@ server <- function(session, input, output) {
         data = rv$data,
         tool = input$tool,
         overall = input$overall,
-        weighted = input$weights,
+        weighted = input$weight,
         colour = input$barplotcolour
       ))
     } else {
@@ -1084,7 +1196,7 @@ server <- function(session, input, output) {
       data = rv$data,
       tool = input$tool,
       overall = input$overall,
-      weighted = input$weights,
+      weighted = input$weight,
       colour = input$barplotcolour
     ) +
       
@@ -1129,13 +1241,10 @@ server <- function(session, input, output) {
                           value = 0,
                           {
                             shiny::incProgress(7 / 10)
-                            ggplot2::ggsave(
-                              file,
-                              plot = summaryplotInput(),
-                              device = input$summarydownloadformat,
-                              width = 8,
-                              height = 2.41,
-                              dpi = 800
+                            rob_save(
+                              file = file, 
+                              rob_object = summaryplotInput(),
+                              dpi = 600
                             )
                           })
     }
@@ -1170,12 +1279,19 @@ server <- function(session, input, output) {
   trafficlightplotInput <- reactive({
     input$update_labels
     
+    if (input$weight == "TRUE") {
+      tf_data <- rv$data[,-c(ncol(rv$data))]
+    } else {
+      tf_data <- rv$data
+    }
+    
     if (input$tool != "Generic") {
     robvis::rob_traffic_light(
-      data = rv$data,
+      data = tf_data,
       tool = input$tool,
       colour = input$trafficcolour,
-      psize = input$psize
+      psize = input$psize, 
+      overall = input$overall
     ) +
       ggplot2::theme(
         strip.text.x = ggplot2::element_text(size = input$traffictextsize),
@@ -1188,40 +1304,21 @@ server <- function(session, input, output) {
         data = rv$data,
         tool = input$tool,
         colour = input$trafficcolour,
-        psize = input$psize
+        psize = input$psize, 
+        overall = input$overall, 
+        x_title = isolate(input$x_title),
+        y_title = isolate(input$y_title),
+        judgement_title = isolate(input$judgement_title),
+        judgement_labels = c(
+          isolate(input$level_critical),
+          isolate(input$level_high),
+          isolate(input$level_moderate),
+          isolate(input$level_low),
+          isolate(input$level_ni),
+          isolate(input$level_na)
+        )
+
       ) + 
-        ggplot2::scale_colour_manual(
-          values = c(
-            l = rv$low_colour,
-            s = rv$concerns_colour,
-            h = rv$high_colour,
-            c = rv$critical_colour,
-            n = rv$ni_colour, 
-            x = rv$na_colour
-          ),
-          labels = c(
-            l = isolate(input$level_low),
-            s = isolate(input$level_moderate),
-            h = isolate(input$level_high),
-            c = "Critical",
-            n = isolate(input$level_ni), 
-            x = "Not applicable"
-          )
-        ) + ggplot2::scale_shape_manual(
-          values = c(
-            l = 43,
-            s = 45,
-            h = 120,
-            c = 33,
-            n = 63, 
-            x = 32
-          ),
-          labels = c(l = isolate(input$level_low),
-                     s = isolate(input$level_moderate),
-                     h = isolate(input$level_high),
-                     c = "Critical",
-                     n = isolate(input$level_ni), 
-                     x = "Not applicable")) +
         ggplot2::theme(
           strip.text.x = ggplot2::element_text(size = input$traffictextsize),
           strip.text.y.left = ggplot2::element_text(size = input$traffictextsize),
@@ -1244,6 +1341,11 @@ server <- function(session, input, output) {
     waitress_tf$start()
     trafficlightplotInput()
   })
+  
+  
+  
+
+  
   
   # Define height of onscreen plot dynamically
   nrowspx <- reactive({
@@ -1279,27 +1381,18 @@ server <- function(session, input, output) {
     },
     content = function(file) {
       
-      # Account for long study names
-      nchar_study <- max(nchar(as.character(rv$data$Study)))
-      nchar_domain <- max(nchar(as.character(colnames(rv$data)))) + 3
-      width_adj <- ifelse(nchar_study > 8, 8+nchar_study*0.05, 8)
-      width_adj <- ifelse(nchar_domain > 42, width_adj+(nchar_domain-42)*0.05, width_adj)
-      
       # Save with progress
       shiny::withProgress(message = paste0("Downloading ", input$tool, " figure"),
                           value = 0,
                           {
                             shiny::incProgress(7 / 10)
-                            ggplot2::ggsave(
-                              file,
-                              plot = trafficlightplotInput(),
-                              device = input$trafficdownloadformat,
-                              width = width_adj,
-                              height = nrowsin(),
-                              units = "in",
-                              dpi = 800,
-                              limitsize = FALSE
+                            rob_save(
+                              file = file, 
+                              rob_object = trafficlightplotInput(),
+                              dpi = 600
                             )
+                            
+                            
                           })
     }
   )

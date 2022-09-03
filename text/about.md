@@ -1,5 +1,3 @@
-### Additional information
-
 #### About the tool
 
 `robvis` was developed during the
